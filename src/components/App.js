@@ -115,7 +115,6 @@ function App() {
   const registerUser = ({ email, password }) => {
     mestoAuth.register(email, password)
       .then((res) => {
-        localStorage.setItem("jwt", res.token)
         setCurrentEmail(res.email);
         navigate('/sign-in');
         setIsSuccess(true);
@@ -133,7 +132,9 @@ function App() {
     mestoAuth.authorize(email, password)
       .then((res) => {
         localStorage.setItem('jwt', res.token);
-        checkToken();
+        setIsLoggedIn(true);
+        setCurrentEmail(email);
+        navigate("/", { replace: true });
       })
       .catch((err) => {
         console.log(`Ошибка: ${err}`);
@@ -157,28 +158,30 @@ function App() {
   function signOut() {
     localStorage.removeItem('jwt');
     setIsLoggedIn(false);
-    navigate("/sign-up");
+    navigate("/sign-in");
     setCurrentEmail("");
   }
 
   React.useEffect(() => {
     checkToken();
-    api.getDataUserInfo()
-      .then((user) => {
-        setCurrentUser(user);
-      })
-      .catch((err) => {
-        console.log(`Ошибка: ${err}`);
-      });
+    if (isLoggedIn) {
+      api.getDataUserInfo()
+        .then((user) => {
+          setCurrentUser(user);
+        })
+        .catch((err) => {
+          console.log(`Ошибка: ${err}`);
+        });
 
-    api.getDataCards()
-      .then((cards) => {
-        setCardInfo(cards);
-      })
-      .catch((err) => {
-        console.log(`Ошибка: ${err}`);
-      });
-  }, [])
+      api.getDataCards()
+        .then((cards) => {
+          setCardInfo(cards);
+        })
+        .catch((err) => {
+          console.log(`Ошибка: ${err}`);
+        });
+    }
+  }, [isLoggedIn])
 
   return (
     <CurrentUserContext.Provider value={currentUser}>
@@ -222,7 +225,7 @@ function App() {
           onClose={closeAllPopups}
         />
 
-        <InfoToolTip isOpen={isInfoToolTipOpen} onClose={closeAllPopups} registrationInfo={registrationInfo} isSuccess={isSuccess}/>
+        <InfoToolTip isOpen={isInfoToolTipOpen} onClose={closeAllPopups} registrationInfo={registrationInfo} isSuccess={isSuccess} />
       </div>
 
     </CurrentUserContext.Provider>
